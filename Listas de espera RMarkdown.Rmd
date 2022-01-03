@@ -1,0 +1,385 @@
+---
+title: ""
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+library(readxl)
+library(kableExtra)
+library(tidyverse)
+library(dplyr)
+
+## Global options
+options(max.print = "75")
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+ # Para que no muestre alertas
+
+opts_knit$set(width = 75)
+```
+
+```{r BBDD, include=FALSE}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+
+Fecha_corte <- "2021-08-31"
+Fecha_COMGES <- "2019-03-31"
+
+ABIERTOS <- read_excel("BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/ABIERTOS_20210831.xlsx", 
+                                sheet = "Sigte", col_types = c("numeric", 
+                                                               "text", "text", "text", "text", "date", 
+                                                               "numeric", "text", "text", "numeric", 
+                                                               "text", "date", "text", "text", "text", 
+                                                               "text", "text", "numeric", "text", 
+                                                               "text", "text", "numeric", "text", 
+                                                               "text", "text", "text", "numeric", 
+                                                               "text", "text", "text"))
+
+ABIERTOS <- ABIERTOS %>% 
+  filter(ESTAB_DEST == "109101",
+         Bloqueados == "N") %>% 
+  select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO, -PLANO, 
+         - EXTREMIDAD, - ss_destino) %>% 
+  mutate("Fecha_corte" = as.Date(Fecha_corte),
+         "Fecha_COMGES" = as.Date(Fecha_COMGES),
+         grupo_glosa = toupper(grupo_glosa)) %>% 
+  mutate("Especialidad" = case_when(
+    grupo_glosa == "OFTALMOLÓGICA" ~ "OFTALMOLOGÍA",
+    grupo_glosa == "OFTALMOLOGÍA" ~ "OFTALMOLOGÍA",
+    
+    grupo_glosa == "NUTRIÓLOGO" ~ "NUTRIÓLOGO PEDIÁTRICO",
+    grupo_glosa == "GENÉTICA CLÍNICA" ~ "GENÉTICA CLÍNICA",
+    grupo_glosa == "NEUROCIRUGÍA" ~ "NEUROCIRUGÍA",
+    grupo_glosa == "PEDIATRÍA" ~ "PEDIATRÍA",
+    grupo_glosa == "GASTROENTEROLOGÍA" ~ "GASTROENTEROLOGÍA PEDIÁTRICA",
+    
+    grupo_glosa == "PLÁSTICA Y REPARADORA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    grupo_glosa == "CIRUGÍA PLÁSTICA Y REPARADORA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    grupo_glosa == "CIRUGÍA PLASTICA Y REPARADORA PEDIÁTRICA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    
+    grupo_glosa == "ANESTESIOLOGÍA" ~ "ANESTESIOLOGÍA",
+
+    grupo_glosa == "ENFERMEDADES RESPIRATORIAS" ~ "ENFERMEDAD RESPIRATORIA PEDIÁTRICA (BRONCOPULMONAR INFANTIL)",
+    grupo_glosa == "INFECTOLOGÍA" ~ "INFECTOLOGÍA PEDIÁTRICA",
+    grupo_glosa == "NEFROLOGÍA" ~ "NEFROLOGÍA PEDIÁTRICA",
+    grupo_glosa == "PSIQUIATRÍA" ~ "PSIQUIATRÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    grupo_glosa == "ENDOCRINOLOGÍA" ~ "ENDOCRINOLOGÍA PEDIÁTRICA",
+    grupo_glosa == "MEDICINA FÍSICA Y REHABILITACIÓN" ~ "MEDICINA FÍSICA Y REHABILITACIÓN PEDIÁTRICA (FISIATRÍA PEDIÁTRICA)",
+    grupo_glosa == "NEUROLOGÍA" ~ "NEUROLOGÍA PEDIÁTRICA",
+    grupo_glosa == "REUMATOLOGÍA" ~ "REUMATOLOGÍA PEDIÁTRICA",
+    
+    grupo_glosa == "TRAUMATOLOGÍA Y ORTOPEDIA" ~ "TRAUMATOLOGÍA Y ORTOPEDIA PEDIÁTRICA",
+    grupo_glosa == "TRAUMATOLOGÍA" ~ "TRAUMATOLOGÍA Y ORTOPEDIA PEDIÁTRICA",
+    
+    grupo_glosa == "GINECOLOGÍA Y OBSTETRICIA" ~ "GINECOLOGÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    grupo_glosa == "GINECOLOGÍA" ~ "GINECOLOGÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    
+    grupo_glosa == "UROLOGÍA Y NEFROLOGÍA" ~ "UROLOGÍA PEDIÁTRICA",
+    grupo_glosa == "UROLOGÍA" ~ "UROLOGÍA PEDIÁTRICA",
+    
+    grupo_glosa == "OTORRINOLARINGOLOGÍA" ~ "OTORRINOLARINGOLOGÍA",
+    grupo_glosa == "OTORRINOLARINGOLÓGICA" ~ "OTORRINOLARINGOLOGÍA",
+    
+    grupo_glosa == "ODONTOPEDIATRÍA" ~ "ODONTOPEDIATRÍA",
+    grupo_glosa == "ORTODONCIA" ~ "ORTODONCIA",
+    grupo_glosa == "ODONTOLOGÍA" ~ "ODONTOLOGÍA",
+    
+    grupo_glosa == "CARDIOLOGÍA" ~ "CARDIOLOGÍA PEDIÁTRICA",
+    grupo_glosa == "CIRUGÍA CARDIOVASCULAR" ~ "CARDIOLOGÍA PEDIÁTRICA",
+    
+    grupo_glosa == "ONCOLOGÍA MÉDICA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    grupo_glosa == "HEMATO-ONCOLOGÍA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    grupo_glosa == "HEMATOLOGÍA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    
+    grupo_glosa == "DERMATOLOGÍA Y TEGUMENTOS" ~ "DERMATOLOGÍA",
+    grupo_glosa == "DERMATOLOGÍA" ~ "DERMATOLOGÍA",
+    
+    
+    grupo_glosa == "CIRUGÍA DIGESTIVA" ~ "CIRUGÍA PEDIÁTRICA",
+    grupo_glosa == "CIRUGÍA PEDIÁTRICA" ~ "CIRUGÍA PEDIÁTRICA",
+    
+    grupo_glosa == "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    grupo_glosa == "CIRUGÍA DE CABEZA Y CUELLO" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    grupo_glosa == "CIRUGÍA Y TRAUMATOLOGÍA MÁXILOFACIAL" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    TRUE ~ tolower(grupo_glosa)))
+
+```
+
+
+```{r BBDD Egresos, include=FALSE}
+EGRESOS <- read_excel("BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/EGRESOS.xlsx",
+                      sheet = "BD")
+
+EGRESOS <- EGRESOS %>% 
+  filter(ESTAB_DEST == "109101") %>% 
+  select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO, -PLANO, 
+         - EXTREMIDAD, - ss_destino) %>% 
+  mutate("Fecha_corte" = as.Date(Fecha_corte),
+         "Fecha_COMGES" = as.Date(Fecha_COMGES),
+         "dias_espera" = as.numeric(difftime(F_SALIDA, F_ENTRADA, units = "days")),
+         grupo_rest = toupper(grupo_rest)) %>% 
+  mutate("Especialidad" = case_when(
+    grupo_rest == "OFTALMOLÓGICA" ~ "OFTALMOLOGÍA",
+    grupo_rest == "OFTALMOLOGÍA" ~ "OFTALMOLOGÍA",
+    
+    grupo_rest == "NUTRIÓLOGO" ~ "NUTRIÓLOGO PEDIÁTRICO",
+    grupo_rest == "GENÉTICA CLÍNICA" ~ "GENÉTICA CLÍNICA",
+    grupo_rest == "NEUROCIRUGÍA" ~ "NEUROCIRUGÍA",
+    grupo_rest == "PEDIATRÍA" ~ "PEDIATRÍA",
+    grupo_rest == "GASTROENTEROLOGÍA" ~ "GASTROENTEROLOGÍA PEDIÁTRICA",
+    
+    grupo_rest == "PLÁSTICA Y REPARADORA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    grupo_rest == "CIRUGÍA PLÁSTICA Y REPARADORA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    grupo_rest == "CIRUGÍA PLASTICA Y REPARADORA PEDIÁTRICA" ~ "CIRUGÍA PLÁSTICA Y REPARADORA PEDIÁTRICA",
+    
+    grupo_rest == "ANESTESIOLOGÍA" ~ "ANESTESIOLOGÍA",
+    
+    grupo_rest == "ENFERMEDADES RESPIRATORIAS" ~ "ENFERMEDAD RESPIRATORIA PEDIÁTRICA (BRONCOPULMONAR INFANTIL)",
+    grupo_rest == "INFECTOLOGÍA" ~ "INFECTOLOGÍA PEDIÁTRICA",
+    grupo_rest == "NEFROLOGÍA" ~ "NEFROLOGÍA PEDIÁTRICA",
+    grupo_rest == "PSIQUIATRÍA" ~ "PSIQUIATRÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    grupo_rest == "ENDOCRINOLOGÍA" ~ "ENDOCRINOLOGÍA PEDIÁTRICA",
+    grupo_rest == "MEDICINA FÍSICA Y REHABILITACIÓN" ~ "MEDICINA FÍSICA Y REHABILITACIÓN PEDIÁTRICA (FISIATRÍA PEDIÁTRICA)",
+    grupo_rest == "NEUROLOGÍA" ~ "NEUROLOGÍA PEDIÁTRICA",
+    grupo_rest == "REUMATOLOGÍA" ~ "REUMATOLOGÍA PEDIÁTRICA",
+    
+    grupo_rest == "TRAUMATOLOGÍA Y ORTOPEDIA" ~ "TRAUMATOLOGÍA Y ORTOPEDIA PEDIÁTRICA",
+    grupo_rest == "TRAUMATOLOGÍA" ~ "TRAUMATOLOGÍA Y ORTOPEDIA PEDIÁTRICA",
+    
+    grupo_rest == "GINECOLOGÍA Y OBSTETRICIA" ~ "GINECOLOGÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    grupo_rest == "GINECOLOGÍA" ~ "GINECOLOGÍA PEDIÁTRICA Y DE LA ADOLESCENCIA",
+    
+    grupo_rest == "UROLOGÍA Y NEFROLOGÍA" ~ "UROLOGÍA PEDIÁTRICA",
+    grupo_rest == "UROLOGÍA" ~ "UROLOGÍA PEDIÁTRICA",
+    
+    grupo_rest == "OTORRINOLARINGOLOGÍA" ~ "OTORRINOLARINGOLOGÍA",
+    grupo_rest == "OTORRINOLARINGOLÓGICA" ~ "OTORRINOLARINGOLOGÍA",
+    
+    grupo_rest == "ODONTOPEDIATRÍA" ~ "ODONTOPEDIATRÍA",
+    grupo_rest == "ORTODONCIA" ~ "ORTODONCIA",
+    grupo_rest == "ODONTOLOGÍA" ~ "ODONTOLOGÍA",
+    
+    grupo_rest == "CARDIOLOGÍA" ~ "CARDIOLOGÍA PEDIÁTRICA",
+    grupo_rest == "CIRUGÍA CARDIOVASCULAR" ~ "CARDIOLOGÍA PEDIÁTRICA",
+    
+    grupo_rest == "ONCOLOGÍA MÉDICA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    grupo_rest == "HEMATO-ONCOLOGÍA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    grupo_rest == "HEMATOLOGÍA" ~ "HEMATO-ONCOLOGÍA INFANTIL",
+    
+    grupo_rest == "DERMATOLOGÍA Y TEGUMENTOS" ~ "DERMATOLOGÍA",
+    grupo_rest == "DERMATOLOGÍA" ~ "DERMATOLOGÍA",
+    
+    
+    grupo_rest == "CIRUGÍA DIGESTIVA" ~ "CIRUGÍA PEDIÁTRICA",
+    grupo_rest == "CIRUGÍA PEDIÁTRICA" ~ "CIRUGÍA PEDIÁTRICA",
+    
+    grupo_rest == "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    grupo_rest == "CIRUGÍA DE CABEZA Y CUELLO" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    grupo_rest == "CIRUGÍA Y TRAUMATOLOGÍA MÁXILOFACIAL" ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+    TRUE ~ tolower(grupo_rest)), "Causa_Salida" = toupper(case_when(
+      C_SALIDA == "0" ~ "GES",
+      C_SALIDA == "1" ~ "Atencion realizada",
+      C_SALIDA == "2" ~ "Procedimiento informado",
+      C_SALIDA == "4" ~ "Atención otorgada extrasistema",
+      C_SALIDA == "5" ~ "Cambio asegurador",
+      C_SALIDA == "6" ~ "Renuncia o rechazo voluntario",
+      C_SALIDA == "7" ~ "Recuperación espontanea",
+      C_SALIDA == "8" ~ "Inasistencia",
+      C_SALIDA == "9" ~ "Fallecimiento",
+      C_SALIDA == "10" ~ "Solicitud duplicada",
+      C_SALIDA == "11" ~ "Contacto no corresponde",
+      C_SALIDA == "12" ~ "no corresponde realizar cirugía",
+      C_SALIDA == "13" ~ "Traslado coordinado",
+      C_SALIDA == "14" ~ "No pertinencia",
+      C_SALIDA == "15" ~ "Error de digitación",
+      C_SALIDA == "16" ~ "Atencion por resolutividad",
+      C_SALIDA == "17" ~ "Atencion por telemedicina",
+      C_SALIDA == "18" ~ "Modificacion de la condicion clinico-diagnostica",
+      C_SALIDA == "19" ~ "Atención por Hospital Digital",
+      C_SALIDA == "99" ~ "Técnico administrativo (Nivel Central)",
+      TRUE ~ "No decodificado, ubicar codigo")))
+    
+#Egresos LE Ambulatoria----
+egresos_ambulatoria <- EGRESOS %>% filter(glosa_tipo_espera == "1.-MEDICA")
+
+tabla_tipo_egresos <- egresos_ambulatoria %>% count(Causa_Salida)
+tabla_tipo_egresos$proporcion <- round(tabla_tipo_egresos$n/sum(tabla_tipo_egresos$n)*100,1)
+
+T <- tabla_tipo_egresos %>% count(Causa_Salida) %>% 
+  summarise(n=sum(n))
+```
+
+```{r Lista de Espera Ambulatoria, include=FALSE}
+ambulatoria <- ABIERTOS %>% filter(glosa_tipo_espera == "1.-MEDICA")
+
+cant_casos <- ambulatoria %>% count(Especialidad)
+
+```
+
+# Lista de Espera Consulta  Nueva de  Especialidad
+
+<p> <span style = "font-size: 30px"> Total pacientes en lista de espera al `r unique(ambulatoria$Fecha_corte)`</span> </p>
+<p> <span style="font-size: 30px">  <span style="color: rgb(0,0,255);">`r sum(cant_casos$n)` </span> </span> </p>
+
+
+
+```{r include=FALSE}
+estadisticos <- boxplot(ambulatoria$dias_espera)
+
+```
+
+
+
+
+
+### Total pacientes en lista de espera por especialidad
+```{r echo=FALSE}
+ggplot(ambulatoria) +
+  aes(x = ESTAB_DEST, y = dias_espera) +
+  geom_boxplot(shape = "circle", fill = "#06F4C4") +
+  theme_minimal()
+```
+<p> <b> <span style = "font-size: 15px">¿Qué muestra un boxplot?</span> </b></p>
+
+<p><span style = "font-size: 11px">La caja de un boxplot comienza en el primer cuartil (25%) y termina en el tercero (75%). Por lo tanto, la caja representa el 50% de los datos centrales, con una línea dentro que representa la mediana. A cada lado de la caja se dibuja un segmento con los datos más lejanos sin contar los valores atípicos (outliers) del box plot, que en caso de existir, se representarán con círculos. </span></p>
+
+
+<ul type = "square">
+<li> Mínimo (bigote inferior): <span style="color: rgb(0,0,255);">`r estadisticos$stats[1,1]` </span> </li>
+<li> Cuartil 1: <span style="color: rgb(0,0,255);">`r estadisticos$stats[2,1]` </span> </li>
+<li> Cuartil 2 (mediana): <span style="color: rgb(0,0,255);">`r estadisticos$stats[3,1]` </span> </li>
+<li> Cuartil 3: <span style="color: rgb(0,0,255);">`r estadisticos$stats[4,1]` </span> </li>
+<li> Máximo (bigote superior): <span style="color: rgb(0,0,255);">`r estadisticos$stats[5,1]` </span> </li>
+<li> Máximo (con Outliers): <span style="color: rgb(0,0,255);">`r max(summary(ambulatoria$dias_espera))` </span> </li>
+</ul>
+
+
+<p>Podemos observar que el 50% de la lista de espera varía entre los `r estadisticos$stats[2,1]` y los `r estadisticos$stats[4,1]` días de espera. El promedio de días de espera es de `r round(mean(ambulatoria$dias_espera))`</p> 
+
+
+
+
+
+
+### Total pacientes en lista de espera por especialidad
+```{r echo=FALSE}
+ggplot(data = cant_casos, aes(y = reorder(Especialidad, n), x = n)) +
+  geom_bar(stat="identity", fill="steelblue", color = "black") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1, size=5, color = "black")) +
+  theme(axis.text.y = element_text(angle = 0, vjust = 0.5, hjust=1, size=5, color = "black")) +
+  labs(title=NULL,
+       x = NULL, y = NULL) +
+  geom_text(aes(label = n), vjust=0.5, hjust=0, color="black", position = position_dodge(0), size=2)
+```
+
+<p> <b> <span style = "font-size: 12px">Datos considerados</span> </b> </p>
+<p> <span style = "font-size: 12px"> Para este estudio se consideran 2 bases de datos:  
+ <ol> <li> <span style = "font-size: 12px"> Lista de Espera de Consultas Nuevas de Especialidad, consiste en el listado de pacientes que se encuentran en espera de atención al `r unique(ambulatoria$Fecha_corte)` </span> </li>
+ <span style = "font-size: 12px">Consideraciones: no se consideran los pacientes bloqueados</span>
+ <li> <span style = "font-size: 12px"> Egresos de Espera de Consultas Nuevas de Especialidad, son los pacientes atendidos y egresados de la lista de espera durante el año, considerando hasta el `r unique(EGRESOS$Fecha_corte)`</span> </li> </ol>
+ </span> <span style = "font-size: 12px"> Fuente de información: DATADEIS SSMN </span> </p>
+
+# Egresos LE Ambulatoria
+
+
+## Egresos según causal de salida 
+### los egresos al `r unique(EGRESOS$Fecha_corte)`son de `r sum(tabla_tipo_egresos$n)`
+```{r echo=FALSE}
+tabla_tipo_egresos <- tabla_tipo_egresos %>% arrange(-n)
+
+tabla_tipo_egresos %>%
+  kbl(caption = "Egresos según causa de salida") %>%
+  kable_classic(lightable_options = "hover") %>% 
+  column_spec(2, color = "white",
+              background = spec_color(tabla_tipo_egresos$n[1:T$n], end = 0.7),
+              popover = paste("n", tabla_tipo_egresos$n[1:T$n]))
+```
+
+## Egresos con atención realizada según especialidad
+
+```{r include=FALSE}
+egresos_ambulatoria <- EGRESOS %>% filter(glosa_tipo_espera == "1.-MEDICA")
+
+tabla_tipo_egresos <- egresos_ambulatoria %>% count(Causa_Salida)
+tabla_tipo_egresos$proporcion <- round(tabla_tipo_egresos$n/sum(tabla_tipo_egresos$n)*100,1)
+
+R <- tabla_tipo_egresos %>% count(Causa_Salida) %>% 
+  summarise(n=sum(n))
+
+tabla_tipo_egresos %>%
+  kbl(caption = "Egresos según causa de salida") %>%
+  kable_classic(lightable_options = "hover") %>% 
+  column_spec(2, color = "white",
+              background = spec_color(tabla_tipo_egresos$n[1:R$n], end = 0.7),
+              popover = paste("n", tabla_tipo_egresos$n[1:R$n]))
+
+#Egresos Atención realizada LE Ambulatoria----
+egresos_amb_at_ralizada <- EGRESOS %>% 
+  filter(glosa_tipo_espera == "1.-MEDICA" & Causa_Salida == "ATENCION REALIZADA")
+
+tabla_egreso_at_realizada <- egresos_amb_at_ralizada %>% count(Especialidad)
+tabla_egreso_at_realizada$proporcion <- round(tabla_egreso_at_realizada$n/sum(tabla_egreso_at_realizada$n)*100,1)
+
+R <- tabla_egreso_at_realizada %>% count(Especialidad) %>% 
+  summarise(n=sum(n))
+tabla_egreso_at_realizada %>%
+  kbl(caption = "Egresos según causa de salida") %>%
+  kable_classic(lightable_options = "hover") %>% 
+  column_spec(2, color = "white",
+              background = spec_color(tabla_egreso_at_realizada$n[1:R$n], end = 0.7),
+              popover = paste("n", tabla_egreso_at_realizada$n[1:R$n]))
+
+
+tabla_egreso_dias_espera  <- egresos_ambulatoria %>% select(Especialidad, dias_espera) %>% group_by(Especialidad)
+
+tabla_egreso_dias_espera <- egresos_ambulatoria %>% filter(Causa_Salida=="ATENCION REALIZADA") %>% 
+  group_by(Especialidad) %>% 
+  summarise(dias_espera = round(mean(dias_espera),0)) %>%
+  ungroup()
+
+
+
+
+dias_espera <- ambulatoria %>% select(Especialidad, dias_espera) %>% group_by(Especialidad)
+
+dias_espera <- ambulatoria %>% 
+  group_by(Especialidad) %>% 
+  summarise(dias_espera = round(mean(dias_espera),0)) %>%
+  ungroup()
+
+Tabla <- inner_join(dias_espera, tabla_egreso_dias_espera,  by = "Especialidad") %>% 
+  mutate(dias_espera = dias_espera.x,
+         espera_egresos= dias_espera.y,
+         factor= dias_espera.x/dias_espera.y) %>% 
+  select(-dias_espera.x, -dias_espera.y)
+
+Tabla <-  inner_join(cant_casos, Tabla,  by = "Especialidad") %>% 
+  mutate(Cantidad = n) %>% 
+  select(Especialidad, Cantidad, dias_espera, espera_egresos, factor)
+```
+
+
+```{r echo=FALSE}
+
+
+U <- Tabla %>% count(Especialidad) %>% 
+  summarise(n=sum(n))
+Tabla <- Tabla %>% arrange(-n)
+Tabla %>% 
+  kbl(caption = "Egresos") %>%
+  kable_classic(lightable_options = "hover") %>% 
+  column_spec(4, color = "white",
+              background = spec_color(Tabla$espera_egresos[1:U$n], end = 0.7),
+              popover = paste("espera_egresos", Tabla$espera_egresos[1:U$n]))
+
+
+
+```
+
+# Cantidad de Consultas Nuevas de Especialidad
