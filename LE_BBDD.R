@@ -9,11 +9,9 @@ library(dplyr)
 
 fechacorte <- "2021-10-31"
 
-archivo <- "BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/ABIERTOS_12112021.xlsx"
-errores_carga <- read_excel("BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx", 
-                      sheet = "ERROR DE CARGA")
-errores_rut_provisorio <- read_excel("BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx", 
-                      sheet = "ERROR RUN PROVISORIO")
+archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/ABIERTOS_12112021.xlsx"
+errores_carga <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR DE CARGA")
+errores_rut_provisorio <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR RUN PROVISORIO")
 
 ABIERTOS <- read_excel(archivo, sheet = "Sigte") %>% filter(ESTAB_DEST==109101)
 PRESTACIONES <- read_excel(archivo, sheet = "Prest") %>% mutate(PRESTA_MIN =propuesta_codigo) %>% select(PRESTA_MIN, glosa_grupo, glosa)
@@ -94,13 +92,13 @@ ABIERTOS <- ABIERTOS %>% mutate(glosa_grupo = case_when(
                                   glosa_grupo == "PEDIATRÍA"  ~ "PEDIATRÍA",
                                   glosa_grupo == "NUTRIÓLOGO"  ~ "NUTRIÓLOGO", 
                                   glosa_grupo == "ODONTOLOGÍA"  ~ "ODONTOLOGÍA",
-                                  TRUE ~ "No identificada"))
+                                  TRUE ~ "No identificada"), "Pendiente de atención"= ifelse(ABIERTOS$SIGTE_ID %in% errores_rut_provisorio$SIGTE_ID | ABIERTOS$SIGTE_ID %in% errores_carga$SIGTE_ID, "Por eliminar de la LE", "Sigue en LE"))
          
 
 LE_Abiertos <-  ABIERTOS %>% select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO)
 
 
 
-write.csv(ABIERTOS, "BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_Completa_LE.csv")
-write.csv(LE_Abiertos, "BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
+write.csv(ABIERTOS, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_Completa_LE.csv")
+write.csv(LE_Abiertos, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
 
