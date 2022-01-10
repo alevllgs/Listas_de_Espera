@@ -7,9 +7,9 @@ library(dplyr)
 
 #fechacorte <- readline(prompt = "Ingresar Fecha de corte, formato 31-01-2021: ")
 
-fechacorte <- "2021-10-31"
+fechacorte <- "2021-11-30"
 
-archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/ABIERTOS_12112021.xlsx"
+archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2021_11.xlsx"
 errores_carga <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR DE CARGA")
 errores_rut_provisorio <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR RUN PROVISORIO")
 
