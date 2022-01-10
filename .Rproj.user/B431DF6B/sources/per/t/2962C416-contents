@@ -7,11 +7,18 @@ library(dplyr)
 
 #fechacorte <- readline(prompt = "Ingresar Fecha de corte, formato 31-01-2021: ")
 
-fechacorte <- "2021-11-30"
+fechacorte <- "2021-10-31"
 
-archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2021_11.xlsx"
+archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2021_10.xlsx"
 errores_carga <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR DE CARGA")
 errores_rut_provisorio <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR RUN PROVISORIO")
+
+BBDD_LE <- read.csv("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
+BBDD_LE$FECHA_NAC <- as.Date(BBDD_LE$FECHA_NAC)
+BBDD_LE$F_ENTRADA <- as.Date(BBDD_LE$F_ENTRADA)
+BBDD_LE$fechacorte <- as.character(BBDD_LE$fechacorte)
+BBDD_LE <- BBDD_LE %>% select(-X)
+
 
 ABIERTOS <- read_excel(archivo, sheet = "Sigte") %>% filter(ESTAB_DEST==109101)
 PRESTACIONES <- read_excel(archivo, sheet = "Prest") %>% mutate(PRESTA_MIN =propuesta_codigo) %>% select(PRESTA_MIN, glosa_grupo, glosa)
@@ -92,13 +99,17 @@ ABIERTOS <- ABIERTOS %>% mutate(glosa_grupo = case_when(
                                   glosa_grupo == "PEDIATRÍA"  ~ "PEDIATRÍA",
                                   glosa_grupo == "NUTRIÓLOGO"  ~ "NUTRIÓLOGO", 
                                   glosa_grupo == "ODONTOLOGÍA"  ~ "ODONTOLOGÍA",
-                                  TRUE ~ "No identificada"), "Pendiente de atención"= ifelse(ABIERTOS$SIGTE_ID %in% errores_rut_provisorio$SIGTE_ID | ABIERTOS$SIGTE_ID %in% errores_carga$SIGTE_ID, "Por eliminar de la LE", "Sigue en LE"))
+                                  TRUE ~ "No identificada"), "Pendiente_de_atencion"= ifelse(ABIERTOS$SIGTE_ID %in% errores_rut_provisorio$SIGTE_ID | ABIERTOS$SIGTE_ID %in% errores_carga$SIGTE_ID, "Por eliminar de la LE", "Sigue en LE"))
          
 
-LE_Abiertos <-  ABIERTOS %>% select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO)
+LE_Abiertos <-  ABIERTOS %>% select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO, -glosa, -PRESTA_EST, -SOSPECHA_DIAG, -CONFIR_DIAG)
+LE_Abiertos$fechacorte <- as.character(LE_Abiertos$fechacorte)
 
-
+LE_Abiertos <- rbind(BBDD_LE, LE_Abiertos)
+LE_Abiertos$fechacorte  <- as.Date(LE_Abiertos$fechacorte)
 
 write.csv(ABIERTOS, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_Completa_LE.csv")
 write.csv(LE_Abiertos, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
+
+rm(BBDD_LE, BLOQUEADOS, errores_rut_provisorio, errores_carga, ESTABLECIMIENTOS, LE_Abiertos, POSTERGADOS, PRESTACIONES, SENAME, archivo, cod_odonto, fechacorte)
 
