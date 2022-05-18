@@ -7,9 +7,30 @@ library(dplyr)
 
 #fechacorte <- readline(prompt = "Ingresar Fecha de corte, formato 31-01-2021: ")
 
-fechacorte <- "2022-03-31"
+anio <- "2021"
+mes <- "12"
 
-archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2022_03.xlsx"
+
+
+
+dia <- case_when(
+  mes=="01" ~ "31",
+  mes=="02" ~ "28",
+  mes=="03" ~ "31",
+  mes=="04" ~ "30",
+  mes=="05" ~ "31",
+  mes=="06" ~ "30",
+  mes=="07" ~ "31",
+  mes=="08" ~ "31",
+  mes=="09" ~ "30",
+  mes=="10" ~ "31",
+  mes=="11" ~ "30",
+  mes=="12" ~ "31",
+  TRUE ~ "0")
+
+fechacorte <- paste0(anio,"-",mes,"-",dia)
+
+archivo <- paste0("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_",anio,"_",mes,".xlsx")
 errores_carga <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR DE CARGA")
 errores_rut_provisorio <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR RUN PROVISORIO")
 
@@ -20,7 +41,7 @@ BBDD_LE$fechacorte <- as.character(BBDD_LE$fechacorte)
 BBDD_LE <- BBDD_LE %>% select(-X)
 
 
-ABIERTOS <- read_excel(archivo, sheet = "Sigte") %>% filter(ESTAB_DEST==109101)
+ABIERTOS <- read_excel(archivo, sheet = "Sigte") %>% filter(ESTAB_DEST==109101) %>% mutate(ESTAB_ORIG = as.character(ESTAB_ORIG ))
 PRESTACIONES <- read_excel(archivo, sheet = "Prest") %>% mutate(PRESTA_MIN =propuesta_codigo) %>% select(PRESTA_MIN, glosa_grupo, glosa)
 ESTABLECIMIENTOS <- read_excel(archivo, sheet = "estab") %>% mutate(ESTAB_ORIG = as.character(cod_deis)) %>% select(ESTAB_ORIG, cod_comuna, nombre_estab, tipoEstablecimiento, nom_comuna)
 
@@ -126,7 +147,7 @@ No_identificada_especialidad <- ABIERTOS %>% filter(glosa_grupo == "No identific
 write.csv(ABIERTOS, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_Completa_LE.csv")
 write.csv(LE_Abiertos, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
 
-rm(BBDD_LE, BLOQUEADOS, errores_rut_provisorio, errores_carga, ESTABLECIMIENTOS, LE_Abiertos, POSTERGADOS, PRESTACIONES, SENAME, archivo, cod_odonto, fechacorte)
+rm(BBDD_LE, BLOQUEADOS, errores_rut_provisorio, errores_carga, ESTABLECIMIENTOS, LE_Abiertos, POSTERGADOS, PRESTACIONES, SENAME, archivo, cod_odonto, fechacorte, anio, mes, dia, No_identificada_especialidad)
 
 # BBDD_LE <- read.csv("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
 # BBDD_LE <- BBDD_LE %>% filter(fechacorte != "2022-01-31") #me sirve para borrar datos de la BBDD
