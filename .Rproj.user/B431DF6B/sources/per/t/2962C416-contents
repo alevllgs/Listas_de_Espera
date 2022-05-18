@@ -7,9 +7,9 @@ library(dplyr)
 
 #fechacorte <- readline(prompt = "Ingresar Fecha de corte, formato 31-01-2021: ")
 
-fechacorte <- "2021-10-31"
+fechacorte <- "2022-03-31"
 
-archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2021_10.xlsx"
+archivo <- "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD LE DataDEIS/ABIERTOS_2022_03.xlsx"
 errores_carga <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR DE CARGA")
 errores_rut_provisorio <- read_excel("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/Acumulado de errores para dashboard.xlsx",sheet = "ERROR RUN PROVISORIO")
 
@@ -22,7 +22,8 @@ BBDD_LE <- BBDD_LE %>% select(-X)
 
 ABIERTOS <- read_excel(archivo, sheet = "Sigte") %>% filter(ESTAB_DEST==109101)
 PRESTACIONES <- read_excel(archivo, sheet = "Prest") %>% mutate(PRESTA_MIN =propuesta_codigo) %>% select(PRESTA_MIN, glosa_grupo, glosa)
-ESTABLECIMIENTOS <- read_excel(archivo, sheet = "estab") %>% mutate(ESTAB_ORIG = cod_deis) %>% select(ESTAB_ORIG, cod_comuna, nombre_estab, tipoEstablecimiento, nom_comuna)
+ESTABLECIMIENTOS <- read_excel(archivo, sheet = "estab") %>% mutate(ESTAB_ORIG = as.character(cod_deis)) %>% select(ESTAB_ORIG, cod_comuna, nombre_estab, tipoEstablecimiento, nom_comuna)
+
 SENAME <- read_excel(archivo, sheet = "BD_SENAME") %>% select(RUN)
 BLOQUEADOS <- read_excel(archivo, sheet = "Bloqueados") %>% select(RUN, SIGTE_ID, DETALLE)
 POSTERGADOS <- read_excel(archivo,sheet = "Postergados", skip = 1) %>% select(RUN...2, SIGTE_ID, "Por Motivo de:")
@@ -30,15 +31,15 @@ POSTERGADOS <- read_excel(archivo,sheet = "Postergados", skip = 1) %>% select(RU
 cod_odonto <- c("09-003","09-011","09-010","09-002","09-014","09-007","09-009","09-005","09-001","09-030")
 ABIERTOS$fechacorte <- as.Date(fechacorte)
 
-ABIERTOS <- ABIERTOS %>% select(-glosa_tipo_espera,-grupo_glosa, -detalle_glosa, -dias_espera, -Glosa_Origen, -comuna_origen, -Glosa_destino, -comuna_destino, -PLANO, -EXTREMIDAD, -ID_LOCAL, -ss_destino, -nivel_atencion, -SENAME, -Bloqueados) 
-                                
-ABIERTOS <- ABIERTOS %>% 
+ABIERTOS <- ABIERTOS %>% select(-glosa_tipo_espera,-grupo_glosa, -detalle_glosa, -dias_espera, -Glosa_Origen, -comuna_origen, -Glosa_destino, -comuna_destino, -PLANO, -EXTREMIDAD, -ID_LOCAL, -ss_destino, -nivel_atencion, -SENAME, -Bloqueados)
+
+ABIERTOS <- ABIERTOS %>%
   mutate(PRESTA_MIN = str_replace(ABIERTOS$PRESTA_MIN," ", ""),
          SENAME = ifelse(ABIERTOS$RUN %in% SENAME$RUN, "Si", "No"),
-         Bloqueados = ifelse(ABIERTOS$SIGTE_ID %in% BLOQUEADOS$SIGTE_ID, "Si", 
-                             ifelse(ABIERTOS$SIGTE_ID %in% POSTERGADOS$SIGTE_ID, "Si", "No")), 
-         Detalle_lista = ifelse(ABIERTOS$TIPO_PREST == 1 & ABIERTOS$PRESTA_MIN %in% cod_odonto, "Odontologica", 
-                                ifelse(ABIERTOS$TIPO_PREST == 1 & ABIERTOS$PRESTA_MIN == "09-008", "Ortodoncia", 
+         Bloqueados = ifelse(ABIERTOS$SIGTE_ID %in% BLOQUEADOS$SIGTE_ID, "Si",
+                             ifelse(ABIERTOS$SIGTE_ID %in% POSTERGADOS$SIGTE_ID, "Si", "No")),
+         Detalle_lista = ifelse(ABIERTOS$TIPO_PREST == 1 & ABIERTOS$PRESTA_MIN %in% cod_odonto, "Odontologica",
+                                ifelse(ABIERTOS$TIPO_PREST == 1 & ABIERTOS$PRESTA_MIN == "09-008", "Ortodoncia",
                                        ifelse(ABIERTOS$TIPO_PREST == 1, "Especialidades", " "))),
          Tipo_lista = case_when(
            TIPO_PREST == 1 ~ "Consulta Nueva",
@@ -46,7 +47,7 @@ ABIERTOS <- ABIERTOS %>%
            TIPO_PREST == 3 ~ "Procedimientos",
            TIPO_PREST == 4 ~ "Quirurgica",
            TRUE ~ "No identificada"),
-         DiasEspera = difftime(fechacorte, F_ENTRADA, units = "days")) 
+         DiasEspera = difftime(fechacorte, F_ENTRADA, units = "days"))
 
 ABIERTOS <- left_join(x=ABIERTOS, y=PRESTACIONES, by = "PRESTA_MIN")
 ABIERTOS <-  left_join(x=ABIERTOS, y=ESTABLECIMIENTOS, by = "ESTAB_ORIG")
@@ -99,7 +100,19 @@ ABIERTOS <- ABIERTOS %>% mutate(glosa_grupo = case_when(
                                   glosa_grupo == "PEDIATRÍA"  ~ "PEDIATRÍA",
                                   glosa_grupo == "NUTRIÓLOGO"  ~ "NUTRIÓLOGO", 
                                   glosa_grupo == "ODONTOLOGÍA"  ~ "ODONTOLOGÍA",
-                                  TRUE ~ "No identificada"), "Pendiente_de_atencion"= ifelse(ABIERTOS$SIGTE_ID %in% errores_rut_provisorio$SIGTE_ID | ABIERTOS$SIGTE_ID %in% errores_carga$SIGTE_ID, "Por eliminar de la LE", "Sigue en LE"))
+                                  glosa_grupo == "INMUNOLOGÍA"  ~ "INMUNOLOGÍA",
+                                  glosa_grupo == "DIABETOLOGÍA"  ~ "DIABETOLOGÍA",
+                                  glosa_grupo == "INTERVENCIONES UROLOGÍA Y NEFROLOGÍA"  ~ "UROLOGÍA",
+                                  glosa_grupo == "INTERVENCIONES TRAUMATOLÓGICAS"  ~ "TRAUMATOLOGÍA",
+                                  glosa_grupo == "Intervenciones Oftalmológicas"  ~ "OFTALMOLÓGICA",
+                                  glosa_grupo == "CIRUGÍA GENERAL"  ~ "CIRUGÍA PEDIÁTRICA",
+                                  glosa_grupo == "Intervenciones ORL"  ~ "OTORRINOLARINGOLÓGICA",
+                                  
+                                  glosa_grupo == "Intervenciones Quirúrgicas de Cabeza y Cuello"  ~ "CIRUGÍA DE CABEZA, CUELLO Y MAXILOFACIAL",
+                                  glosa_grupo == "Intervenciones Dermatológicas"  ~ "DERMATOLOGÍA Y TEGUMENTOS",
+                                  
+                              
+                                  TRUE ~ glosa_grupo), "Pendiente_de_atencion"= ifelse(ABIERTOS$SIGTE_ID %in% errores_rut_provisorio$SIGTE_ID | ABIERTOS$SIGTE_ID %in% errores_carga$SIGTE_ID, "Por eliminar de la LE", "Sigue en LE"))
          
 
 LE_Abiertos <-  ABIERTOS %>% select(-RUN, -DV, -NOMBRES, -PRIMER_APELLIDO, -SEGUNDO_APELLIDO, -glosa, -PRESTA_EST, -SOSPECHA_DIAG, -CONFIR_DIAG)
@@ -108,8 +121,13 @@ LE_Abiertos$fechacorte <- as.character(LE_Abiertos$fechacorte)
 LE_Abiertos <- rbind(BBDD_LE, LE_Abiertos)
 LE_Abiertos$fechacorte  <- as.Date(LE_Abiertos$fechacorte)
 
+No_identificada_especialidad <- ABIERTOS %>% filter(glosa_grupo == "No identificada")
+
 write.csv(ABIERTOS, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_Completa_LE.csv")
 write.csv(LE_Abiertos, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
 
 rm(BBDD_LE, BLOQUEADOS, errores_rut_provisorio, errores_carga, ESTABLECIMIENTOS, LE_Abiertos, POSTERGADOS, PRESTACIONES, SENAME, archivo, cod_odonto, fechacorte)
 
+# BBDD_LE <- read.csv("C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
+# BBDD_LE <- BBDD_LE %>% filter(fechacorte != "2022-01-31") #me sirve para borrar datos de la BBDD
+# write.csv(BBDD_LE, "C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/BBDD_LE_Tableau.csv")
