@@ -7,9 +7,8 @@ library(dplyr)
 
 #fechacorte <- readline(prompt = "Ingresar Fecha de corte, formato 31-01-2021: ")
 
-anio <- "2021"
-mes <- "12"
-
+anio <- "2022"
+mes <- "04"
 
 
 

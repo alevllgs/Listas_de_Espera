@@ -3,7 +3,7 @@
     "path": "~/GitHub/Listas_de_Espera/LE_BBDD.R",
     "project_path": "LE_BBDD.R",
     "type": "r_source",
-    "hash": "113809499",
+    "hash": "1519532389",
     "contents": "",
     "dirty": false,
     "created": 1641308265317.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "149,206",
-        "scrollLine": "130"
+        "cursorPosition": "145,0",
+        "scrollLine": "129"
     },
     "folds": "",
-    "lastKnownWriteTime": 1652902809,
+    "lastKnownWriteTime": 1653052456,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1652902809942,
+    "last_content_update": 1653052456854,
     "read_only": false,
     "read_only_alternatives": []
 }
