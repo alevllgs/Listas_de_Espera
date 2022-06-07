@@ -5,7 +5,11 @@ library(dplyr)
 library(readxl)
 library(janitor)
 
-Fecha_corte <- "2022-05-27"
+Fecha_corte <- "2022-06-03"
+
+
+Codigo_comunas <-  read_excel("Z:/Alejandro/Listas de Espera/BBDD complementarias/Codigo comunas.xlsx")
+
 
 LE_Semanal <- read_excel("C:/Users/control.gestion3/Downloads/LE ABIERTA_20220603.xlsx", 
                             sheet = "BD_Sigte")
@@ -22,4 +26,9 @@ LE_Semanal <- LE_Semanal %>% mutate(F_ENTRADA = as.character(LE_Semanal$F_ENTRAD
 LE_Semanal <- LE_Semanal %>% mutate(fallecido = as.character(LE_Semanal$fallecido))
 LE_Semanal <- LE_Semanal %>% mutate(F_CITACION = as.character(LE_Semanal$F_CITACION))
 
-write.csv2(LE_Semanal, file="C:/Users/control.gestion3/OneDrive/BBDD Produccion/Listas de Espera/Listas de Espera DATA DEIS/LE_Semanal.csv", row.names = F)
+LE_Semanal <- merge(x = LE_Semanal, y = Codigo_comunas, by.x = "COMUNA", by.y = "codigo", all.x = TRUE)
+LE_Semanal$Comuna_texto <- LE_Semanal$Nombre
+LE_Semanal <- LE_Semanal %>% select(-Provincia, -Región, -Superficie , -Densidad, -`IDH 2005`, -...9, -Latitud , -Longitud, -Nombre, -Población)
+
+
+write.csv2(LE_Semanal, file="Z:/Alejandro/Listas de Espera/Listas de Espera DATA DEIS/LE_Semanal.csv", row.names = F)
